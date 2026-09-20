@@ -12,6 +12,38 @@ REQUIRED_COLUMNS = {
     "Location",
 }
 
+COLUMN_ALIASES = {
+    "SKU": {
+        "sku",
+        "item",
+        "item number",
+        "itemnumber",
+        "product code",
+        "product id",
+    },
+    "Description": {
+        "description",
+        "product",
+        "product name",
+        "item description",
+        "name",
+    },
+    "Quantity": {
+        "quantity",
+        "qty",
+        "units",
+        "stock",
+        "count",
+    },
+    "Location": {
+        "location",
+        "bin",
+        "shelf",
+        "warehouse location",
+        "storage location",
+    },
+}
+
 
 def get_excel_files():
     """
@@ -43,6 +75,31 @@ def clean_dataframe(df):
 
     return df, duplicates_removed
 
+def normalize_column_name(column_name):
+    """
+    Converts a column name into a normalized form
+    for comparison.
+    """
+    return str(column_name).strip().lower()
+
+
+def map_column_aliases(df):
+    """
+    Renames known column aliases to the internal
+    DataClean Pro column names.
+    """
+
+    rename_map = {}
+
+    for column in df.columns:
+        normalized = normalize_column_name(column)
+
+        for standard_name, aliases in COLUMN_ALIASES.items():
+            if normalized == standard_name.lower() or normalized in aliases:
+                rename_map[column] = standard_name
+                break
+
+    return df.rename(columns=rename_map)
 
 def validate_columns(df):
     """
@@ -94,6 +151,8 @@ def process_file(input_file, save_individual=True):
 
     # Clean column names before validation
     df.columns = df.columns.str.strip()
+    
+    df = map_column_aliases(df)
 
     # Validate required columns
     missing_columns = validate_columns(df)
